@@ -1,0 +1,660 @@
+---
+title: "R Exercise"
+author: "Ravikiran Bobba, Mohammed Saqib Asghar, Pooja Dawada"
+date: "8/19/2019"
+output:
+  md_document:
+    variant: gfm
+---
+#Question 1 : Case on Green Buildings
+
+Do you agree with the conclusions of her on-staff stats guru? If so, point to evidence supporting his case. If not, explain specifically where and why the analysis goes wrong, and how it can be improved. (For example, do you see the possibility of confounding variables for the relationship between rent and green status?) Tell your story mainly in pictures, with appropriate introductory and supporting text.
+
+##Approach
+
+First, several set of parameters were looked into and their correlations and their effect on the rent for the property was looked by different graphs. First few graphs were plotted to see the overall distribution of the data. Few additional columns were created to combine multiple redundant columns and convert zeros and ones to categorical variables. 
+
+```{r setup, echo=FALSE, warning=FALSE}
+
+library(tidyverse)
+library(mosaic)
+library(knitr)
+library(dplyr)
+#detach(package:plyr)
+data = read.csv('C:/Users/Pooja Dawada/Desktop/ut/summer/Predictive R Part 2/STA380-master/STA380-master/data/greenbuildings.csv')
+
+
+#Addition of few columns for Analysis
+
+data$green_rating=ifelse(data$green_rating == 1, "Green", "Non_green")
+data$class = ifelse(data$class_a == 1, "Class A", ifelse(data$class_b == 1, "Class B", "Class C"))
+data$net=ifelse(data$net == 1, "Net", "Non_Net")
+data$greentype = ifelse(data$LEED == 1, "LEED", ifelse(data$Energystar == 1, "Energystar", 0))
+
+hist(data$Rent,breaks=30)
+hist(data$leasing_rate,breaks=30)
+ggplot(data = data) + 
+  geom_point(mapping = aes(x = leasing_rate, y = Rent, color = green_rating))
+
+```
+##categorization of continous vairables
+
+Categorization of few continous variables like Age, electricity price and the total days above/below outside temperature for us to use them for visualization
+```{r setup, echo=FALSE, warning=FALSE}
+d1 = data %>%
+  mutate(agecat = cut(age, c(0,15,30,100)))%>%
+  mutate(elecat = cut(Electricity_Costs, c(0,0.01,0.02,0.03,0.05,0.1)))%>%
+  mutate(td = cut(total_dd_07, c(0,2000,4000,6000,8000)))
+summary(data)
+d1 = na.omit(d1)
+d1 = subset(d1, !is.na(age))
+```
+##Data Analysis and Visualization
+
+###Distribution of Green Buidlings across different categories
+
+
+```{r setup, echo=FALSE, warning=FALSE}
+d2 = d1 %>%
+  group_by(agecat) %>%
+  summarize(medianrent = median(Rent),percentage = sum(green_rating=='Green')/n(),countof =n())
+ggplot(data = d2) + 
+  geom_bar(mapping = aes(x=agecat, y=percentage),
+           stat='identity', position ='dodge') +
+  labs(title="Age of the Building wise Percentage of Green Buildings", 
+       y="Percentage of Green Buildings",
+       x = "Age of Building in Years")
+
+ggplot(data = d2) + 
+  geom_bar(mapping = aes(x=agecat, y=medianrent),
+           stat='identity', position ='dodge') +
+    labs(title="Age of the Building wise Median Rent per Sqft", 
+       y="Median Rent",
+       x = "Age of Building in Years")
+
+d3 = d1 %>%
+  group_by(class) %>%
+  summarize(meanrent = median(Rent),percentage = sum(green_rating=='Green')/n(),countof =n())
+
+ggplot(data = d3) + 
+  geom_bar(mapping = aes(x=class, y=percentage),
+           stat='identity', position ='dodge') +
+labs(title="Class wise Percentage of Green Buildings", 
+       y="Percentage of Green Buildings",
+       x = "Class")
+
+ggplot(data = d3) + 
+  geom_bar(mapping = aes(x=class, y=meanrent),
+           stat='identity', position ='dodge') +
+labs(title="Class wise Median Rent per Sqdt", 
+       y="Median Rent",
+       x = "Class")
+
+
+
+
+
+
+
+
+
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r setup, echo=FALSE, warning=FALSE}
+
+d4 = d1 %>%
+  group_by(green_rating, class, agecat) %>%
+  summarize(medianrent = median(Rent),countof =n())
+
+ggplot(data = d4) + 
+  geom_bar(mapping = aes(x=green_rating, y=countof, fill=agecat),
+           stat='identity', position ='dodge') + 
+  facet_wrap(~class) + 
+  labs(title="Count of units", 
+       y="Count of Units",
+       x = "Green Rating",
+       fill="Age")
+
+
+ggplot(data = d4) + 
+  geom_bar(mapping = aes(x=green_rating, y=medianrent, fill=agecat),
+           stat='identity', position ='dodge') + 
+  facet_wrap(~class) + 
+  labs(title="Distribution of Medianrent per Sqft", 
+       y="Medianrent",
+       x = "Green Ratings",
+       fill="Age")
+
+
+```
+From the graphs it is evident that there is no considerable increase in Medianrent for the non-green building to green building for any of the classes and age groups. So this negates the conclusion of the Stats person at the company, Though his observation was right, it was due to higher share of Class A buildings and recent buildings in green rated buildings than merely because of it being a green building. So for the stats guru to improve his suggestion, he should sub-divide the analysis across the class of building and age group for him to improve his suggestion
+
+###Net Contract Level Analysis
+
+
+
+```{r setup, echo=FALSE, warning=FALSE}
+d3net = d1 %>%
+  group_by(green_rating, net) %>%
+  summarize(medianrent = median(Rent),countof =n())
+
+ggplot(data = d3net) + 
+  geom_bar(mapping = aes(x=green_rating, y=medianrent, fill=net),
+           stat='identity', position ='dodge') + 
+  
+  labs(title="MedianRent vs greenrating at contract level", 
+       y="MedianRent",
+       x = "Green_Rating",
+       fill="Net Contract")
+
+```
+Analysis was done to figure out if there is any relation between the contract type charges and the green buildings, the underlying phenomenean being that green building reduce the consumption power, due to their design, so should ideally have lesser difference between Net contract level and Non net Contract. However this was not observed.
+
+###Net Contract Level Analysis with relation to Electricity Prices
+
+
+```{r setup, echo=FALSE, warning=FALSE}
+d3netele = d1 %>%
+  group_by(green_rating, net,elecat) %>%
+  summarize(meanrent = median(Rent),countof =n())
+ggplot(data = d3netele) + 
+  geom_bar(mapping = aes(x=elecat, y=meanrent, fill=net),
+           stat='identity', position ='dodge') + 
+  facet_wrap(~green_rating) + 
+  labs(title="Medianrent at Electricity price category level", 
+       y="Medianrent",
+       x = "Electricity price per Unit",
+       fill="Net Contract")
+```
+The underlying assumption was to compare Net Contract to Non Net contract and understand if there is any correlation between the electricity charges with the difference between the contract and non contract type.This is done to look into option of non net contract offering which can help over the years in competitive pricing as the electricity and gas prices hike and green building usually consume lesser electricity and gas. As it can be observed from graphs above that the difference of rent between the net and non net is higher for Non_green buildings, in higher electricity rate bracket of (.03 to .05).
+
+###Degree Days with Contract rent with Medianrent Comparison
+```{r setup, echo=FALSE, warning=FALSE}
+d3netele = d1 %>%
+  group_by(green_rating, net,td) %>%
+  summarize(meanrent = median(Rent),countof =n())
+
+ggplot(data = d3netele) + 
+  geom_bar(mapping = aes(x=td, y=meanrent, fill=net),
+           stat='identity', position ='dodge') + 
+  facet_wrap(~green_rating) + 
+  labs(title="Degreedays category wise Median rent across Contract type", 
+       y="Medianrent",
+       x = "DegreeDays Category",
+       fill="Contract type")
+```
+From the graphs it is evident that the usual difference across contracts is higher for Non green buildings, which might emphasize that the green rated building are usually less maintanence and the construction company is passing the benefit to the tenants by charging them only a minimal amount. 
+
+
+### GreenRating Vs Medianrent per Sqft
+```{r setup, echo=FALSE, warning=FALSE}
+greentype = d1 %>%
+  group_by( greentype) %>%
+  summarize(meanrent = median(Rent),countof =n())
+
+ggplot(data = greentype) + 
+  geom_bar(mapping = aes(x=greentype, y=meanrent),
+           stat='identity', position ='dodge') + 
+  labs(title="Medianrent at different kinds of Green Rating", 
+       y="Medianrent",
+       x = "Green Rating Type" )
+```
+These graphs indicate the medianrent for different greenrating of Energy star and LEED, It is evident that the Energystar type of GreenRated buildings would earn a higher rent than the LEED in general. Hence if decided to go ahead with greenbuilding aim should be get an Energy star rating for the green building.
+
+#Liner Regression Model on Variables
+```{r setup, echo=FALSE, warning=FALSE}
+lmmodel = lm(Rent~.,data=d1) 
+summary(lmmodel)
+
+```
+A simple Linear model was fit on to all the variables to include and see if the majorly contributing factors to Rent, and from the output of the model it is implied that the stastically significant variables are  class of the building, Net contract type, electricity category, size of the building. The green rating of the building has a very high p value compared to others, implying that it has relatively lesser influence than the other variables.
+
+#Conclusion
+
+In conclusion that just a green building might not be enough for it to be a profittable, it needs to be a Energystar green rating and it should be rented out as a Non net contract and should be charged for utilities at the market rates for the company to make it profitable.This ensures as the electricity and gas prices increase over the period of time, the company could make money on the utilities charge and compensate for the initial investment over time.
+
+#Q3: Portfolio modeling
+
+In the following, bootstrap resampling will be used to estimate the 4-week (20-trading day) value at risk of 3 portfolios at the 5% level.
+
+I have decided to go with evenly split portfolio, the seconf is a safe portfolio and the final one is an aggressive portfolio.
+
+These portfolios will be composed of 5 ETFs - SPY, TLT, LQD, EEM, and VNQ at different weights based on the type of the portfolio.
+```{r,echo=FALSE,warning=FALSE, message=FALSE}
+library(mosaic)
+library(quantmod)
+library(foreach)
+```
+
+```{r,echo=FALSE,warning=FALSE}
+# Import a few stocks
+mystocks = c("SPY", "TLT", "LQD", "EEM", "VNQ")
+myprices = getSymbols(mystocks,  from = "2014-01-01")
+
+# Adjust for splits and dividends
+SPYa = adjustOHLC(SPY)
+TLTa = adjustOHLC(TLT)
+LQDa = adjustOHLC(LQD)
+EEMa = adjustOHLC(EEM)
+VNQa = adjustOHLC(EEM)
+
+# Look at close-to-close changes
+plot(ClCl(SPYa))
+```
+
+```{r,echo=FALSE,warning=FALSE}
+# Combine close to close changes in a single matrix
+all_returns = cbind(ClCl(SPYa),ClCl(TLTa),ClCl(LQDa),ClCl(EEMa),ClCl(VNQa))
+head(all_returns)
+all_returns = as.matrix(na.omit(all_returns))
+N = nrow(all_returns)
+
+pairs(all_returns)
+```
+
+```{r,echo=FALSE,warning=FALSE}
+plot(all_returns[,1], type='l')
+```
+
+```{r,echo=FALSE,warning=FALSE}
+plot(all_returns[,2], type='l')
+```
+
+```{r,echo=FALSE,warning=FALSE}
+plot(all_returns[,3], type='l')
+```
+
+```{r,echo=FALSE,warning=FALSE}
+plot(all_returns[,4], type='l')
+```
+
+```{r,echo=FALSE,warning=FALSE}
+plot(all_returns[,5], type='l')
+```
+
+```{r,echo=FALSE,warning=FALSE}
+# A chunk of code for adjusting all stocks
+# creates a new object adding 'a' to the end
+# For example, WMT becomes WMTa, etc
+for(ticker in mystocks) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+head(SPYa)
+
+# Combine all the returns in a matrix
+all_returns = cbind(	ClCl(SPYa),
+                     ClCl(TLTa),
+                     ClCl(LQDa),
+                     ClCl(EEMa),
+                     ClCl(VNQa))
+head(all_returns)
+all_returns = as.matrix(na.omit(all_returns))
+```
+
+
+```{r,echo=FALSE,warning=FALSE}
+# Compute the returns from the closing prices
+pairs(all_returns)
+
+mu_SPY = mean(all_returns[,1])
+mu_SPY
+sigma_SPY = sd(all_returns[,1])
+sigma_SPY
+mu_TLT = mean(all_returns[,2])
+mu_TLT
+sigma_TLT = sd(all_returns[,2])
+sigma_TLT
+mu_LQD = mean(all_returns[,3])
+mu_LQD
+sigma_LQD = sd(all_returns[,3])
+sigma_LQD
+mu_EEM = mean(all_returns[,4])
+mu_EEM
+sigma_EEM = sd(all_returns[,4])
+sigma_EEM
+mu_VNQ = mean(all_returns[,5])
+mu_VNQ
+sigma_VNQ = sd(all_returns[,5])
+sigma_VNQ
+
+#mu_SPY 0.0004343371, sigma_SPY 0.008338843
+#mu_TLT 0.0003825454, sigma_TLT 0.007377203
+#mu_LQD 0.0002164548, sigma_LQD 0.002973489
+#mu_EEM 0.0001375375, sigma_EEM 0.0117614
+#mu_VNQ 0.0004475514, sigma_VNQ 0.009055812
+
+#Riskiness based on standard deviation, higher the standard deviation--
+#--implies higher risk, so
+#Risky(EEM)
+#Medium(VNQ,SPY,TLT)
+#Safe(LQD)
+
+
+# Update the value of your holdings
+# Assumes an equal allocation to each asset
+total_wealth = 100000
+my_weights = c(0.2,0.2,0.2, 0.2, 0.2)
+holdings = total_wealth*my_weights
+holdings = holdings*(1 + return.today)
+
+# Compute your new total wealth
+total_wealth = sum(holdings)
+```
+The portfolio EEM is the highest risk portfolio among everyone as it has the highest standard deviation. Then the VNQ< SPY, TLT lies in the middle and they can be classified as medium risk portfolio. Then LQD can be classified as a safe portfolio based on it's standard deviation value.
+
+4 weeks of return is simulated using bootstrap for an evenly split portfolio - 20% weight in each ETF
+```{r,echo=FALSE,warning=FALSE}
+#4 weeks of return is simulated using bootstrap for an evenly split portfolio - 20% weight in each ETF
+total_wealth = 100000
+weights = c(0.2, 0.2, 0.2, 0.2, 0.2)
+holdings = weights * total_wealth
+n_days = 20
+wealthtracker = rep(0, n_days) # Set up a placeholder to track total wealth
+for(today in 1:n_days) {
+  return.today = resample(all_returns, 1, orig.ids=FALSE)
+  holdings = holdings + holdings*return.today
+  total_wealth = sum(holdings)
+  wealthtracker[today] = total_wealth
+}
+total_wealth
+plot(wealthtracker, type='l')
+
+# Now simulate many different possible scenarios
+initial_wealth = 100000
+sim1 = foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.2, 0.2, 0.2, 0.2, 0.2)
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+  }
+  wealthtracker
+}
+```
+In a medium risk portfolio: 40% is alloted in SPY, 30% in TLT and 30% in VNQ
+```{r,echo=FALSE,warning=FALSE}
+# In a medium risk portfolio: 0.4 in SPY, 0.3 in TLT, 0.3 in VNQ
+total_wealth = 100000
+weights = c(0.4, 0.3, 0.0, 0.0, 0.3)
+holdings = weights * total_wealth
+n_days = 20
+wealthtracker = rep(0, n_days) # Set up a placeholder to track total wealth
+for(today in 1:n_days) {
+  return.today = resample(all_returns, 1, orig.ids=FALSE)
+  holdings = holdings + holdings*return.today
+  total_wealth = sum(holdings)
+  wealthtracker[today] = total_wealth
+}
+total_wealth
+plot(wealthtracker, type='l')
+
+# Now simulate many different possible scenarios
+initial_wealth = 100000
+sim2 = foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.4, 0.3, 0.0, 0.0, 0.3)
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+  }
+  wealthtracker
+}
+```
+In a high risk portfolio- 25% is alloted in SPY, 50% in EEM and 25% in VNQ
+```{r,echo=FALSE,warning=FALSE}
+#In a high risk portfolio- 0.25 in SPY, 0.5 in EEM, 0.25 in VNQ
+total_wealth = 100000
+weights = c(0.25, 0.0, 0.0, 0.5, 0.25)
+holdings = weights * total_wealth
+n_days = 20
+wealthtracker = rep(0, n_days) # Set up a placeholder to track total wealth
+for(today in 1:n_days) {
+  return.today = resample(all_returns, 1, orig.ids=FALSE)
+  holdings = holdings + holdings*return.today
+  total_wealth = sum(holdings)
+  wealthtracker[today] = total_wealth
+}
+total_wealth
+plot(wealthtracker, type='l')
+
+# Now simulate many different possible scenarios
+initial_wealth = 100000
+sim3 = foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.25, 0.0, 0.0, 0.5, 0.25)
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+  }
+  wealthtracker
+}
+```
+
+```{r,echo=FALSE,warning=FALSE}
+avg_evensplit_return = mean(sim1[,n_days])
+avg_evensplit_return
+avg_medium_return = mean(sim2[,n_days])
+avg_medium_return
+avg_aggressive_return = mean(sim3[,n_days])
+avg_aggressive_return
+
+# Plot the average portfolio values for each portfolio
+plot(c(1,20), c(100000,avg_evensplit_return), type='l', col='#009E73', lwd=2, ylim=c(100000,103000), xlab='Days', ylab='Portfolio Value', main="Average 4-week return by Portfolio Type")
+lines(c(1,20), c(100000, avg_medium_return),type='l', col='#56B4E9', lwd=2)
+lines(c(1,20), c(100000,avg_aggressive_return), type='l', col='#E69F00', lwd=2)
+legend('topright', c('Aggressive','Even Split','Safe'), col=c('#E69F00','#009E73','#56B4E9'), lwd=2, bty='n')
+```
+Plotting the average 4-week returns for each portfolio type reveals that the safe portfolio yields the highest return on average followed by the even split portfolio and the aggressive portfolio.
+
+Calculating value at risk at the 5% level for each portfolio
+```{r,echo=FALSE,warning=FALSE}
+# Calculate value at risk at the 5% level for each portfolio
+quantile(sim1[,n_days], 0.05) - 100000
+quantile(sim2[,n_days], 0.05) - 100000
+quantile(sim3[,n_days], 0.05) - 100000
+```
+the 4-week value at risk at the 5% level is 
+
+$-3140.321 for the even split portfolio, 
+
+$-3179.721 for the medium risk portfolio, and 
+
+$-6037.401 for the risky portfolio. 
+
+Thus, in this case going with aggressive portfolio will prove to a bad choice. Instead one can opt for a safer or a medium risk portfolio.
+```{r,echo=FALSE,warning=FALSE}
+# Graph the return distribution for each portfolio
+hist(sim1[,n_days] - 100000, xlab='Portfolio Value', main='Distribution of Even Split Portfolio Returns')
+```
+
+```{r,echo=FALSE,warning=FALSE}
+hist(sim2[,n_days] - 100000, xlab='Portfolio Value', main='Distribution of Safe Portfolio Returns')
+```
+
+```{r,echo=FALSE,warning=FALSE}
+hist(sim3[,n_days]- 100000, xlab='Portfolio Value', main='Distribution of Aggressive Portfolio Returns')
+```
+Thus, in this case going with aggressive portfolio will prove to a bad choice. Instead one can opt for a safer or a medium risk portfolio.
+
+
+
+#Q4: Market Segmentation - 
+
+##Step1: Import and scale the data
+```{r echo = FALSE, message=FALSE}
+social_marketing <- read.csv("C:/Users/Pooja Dawada/Desktop/ut/summer/Predictive R Part 2/STA380-master/STA380-master/data/social_marketing.csv")
+
+library(ggplot2)
+library(LICORS)  # for kmeans++
+library(foreach)
+library(mosaic)
+
+X = social_marketing[,(2:37)]
+X = scale(X, center=TRUE, scale=TRUE)
+# Extract the centers and scales from the rescaled data (which are named attributes)
+mu = attr(X,"scaled:center")
+sigma = attr(X,"scaled:scale")
+
+```
+
+##Step2: Elbow Method for finding the optimal number of clusters
+Plotting wss
+```{r echo = FALSE, message=FALSE}
+set.seed(100)
+Clust_count <- 20
+wss <- sapply(1:Clust_count, function(k){kmeanspp(X, k, nstart=30,iter.max = 15 )$tot.withinss})
+wss
+plot(1:Clust_count, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Clusters",
+     ylab="Within clusters sum of squares")
+
+```
+
+Plotting bss
+```{r echo = FALSE, message=FALSE}
+set.seed(100)
+Clust_count <- 20
+bss <- sapply(1:Clust_count, function(k){kmeanspp(X, k, nstart=30,iter.max = 15 )$betweenss})
+bss
+plot(1:Clust_count, bss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Number of clusters K",
+     ylab="Between clusters sum of squares")
+
+
+```
+
+The plot does not give us any decisive results but k= 8-10 look like viable results, so taking an estimate of k=8
+
+##Step 3: Analyse the clusters
+
+Looking at cluster1
+```{r echo = FALSE, message=FALSE}
+set.seed(100)
+clust1 = kmeanspp(X, 8, nstart=30, iter.max =15)
+
+social_marketing[which(clust1$cluster == 1),]
+```
+Absolute numbers might be misleading because these are small counts, where it might be the case that one category in general gets tweeted about the most/least
+So looking at scaled data's cluster centers to make inferences about these clusters
+
+```{r echo = FALSE, message=FALSE}
+clust1$center[1,]
+```
+Cluster1 is negative centres for almost all the categories which might be people who in general tweet less
+
+```{r echo = FALSE, message=FALSE}
+clust1$center[2,]
+```
+Cluster2 Politics, news, travel, Computers, automotive have the centres : The aware, urban poulation
+
+```{r echo = FALSE, message=FALSE}
+clust1$center[3,]
+```
+Cluster3 Fashion, beauty, cooking, photo sharing has the highest centres (Beauty and lifestyle bloggers)
+
+```{r echo = FALSE, message=FALSE}
+clust1$center[4,]
+```
+Cluster4 health_nutrition, personal fitness, outdoors has highest centres (Health bloggers)
+
+```{r echo = FALSE, message=FALSE}
+clust1$center[5,]
+```
+Cluster5 religion, parenting, sports, food, school has the highest centres(Young parents)
+
+```{r echo = FALSE, message=FALSE}
+clust1$center[6,]
+```
+Cluster6 Online gaming, college uni has the highest centres : College Students
+
+```{r echo = FALSE, message=FALSE}
+clust1$center[7,]
+```
+Cluster7 Spam, adult has the highest centres: Bot
+
+```{r echo = FALSE, message=FALSE}
+clust1$center[8,]
+```
+Cluster8 Chatter, shopping, photosharing has the highest centres
+
+#Q6: Association Rule mining
+
+##Import
+```{r echo = FALSE, message=FALSE}
+library(arules)
+data_raw <- read.transactions("C:/Users/Pooja Dawada/Desktop/ut/summer/Predictive R Part 2/STA380-master/STA380-master/data/groceries.txt", format = "basket", sep=",")
+LIST(head(data_raw),3)
+```
+
+#Frequency Plot
+```{r echo = FALSE, message=FALSE}
+frequentItems <- eclat (data_raw, parameter = list(supp = 0.07, maxlen = 15))
+
+itemFrequencyPlot(data_raw, topN=10, type="absolute", main="Item Frequency")
+
+```
+
+Starting with high support and high confidence to get strongest rules
+Support = 0.0045, confidence = 0.5
+```{r echo=FALSE}
+rules_1 <- apriori (data_raw, parameter = list(supp = 0.0045, conf = 0.5))
+rules_sort_1 <- sort (rules_1, by="lift", decreasing=TRUE)
+arules::inspect(rules_sort_1)
+
+
+```
+#First set of rules
+A lot of high support rules involve whole milk and other vegetables on rhs because we can see from eclat that whole milk and other vegetables are sold the most
+157 rules with support > 0.0045 and confidence 0.5 involve only whole milk and other vegetables in rhs, so if we look at only high support rules, we won't get rules involving other products
+First step to extract rules from here would be, for support>0.0045, get very high confidence and lift rules. Conf of 0.6 and lift of 2.5
+These gives us all the important rules where rhs is whole milk or other vegetables. (Produces 13 rules) All these rules look like a general vegetarian diary/vegetable/fruit grocery trip.
+```{r echo=FALSE}
+rules_1 <- apriori (data_raw, parameter = list(supp = 0.0045, conf = 0.6))
+rules_sort_1 <- sort (rules_1, by="lift", decreasing=TRUE)
+arules::inspect(head(rules_sort_1,13))
+
+```
+##Second set of rules
+Many rules have support between 0.002 and 0.001 but their lift is very high. To capture those, reduced the support to 0.001 
+(The count reduces by a great deal because of this) So one way of pulling these would be, support of 0.001, confidence of 0.6 and lift of 9. 
+This will help us capture only those rules where the impact is huge even though the support is small. This gives us 11 rules
+These look like sandwich, party, parfait trips.
+```{r echo=FALSE}
+rules_2 <- apriori (data_raw, parameter = list(supp = 0.001, conf = 0.6))
+rules_sort_2 <- sort (rules_2, by="lift", decreasing=TRUE)
+arules::inspect(head(rules_sort_2,11))
+
+```
+##Third set of rules
+Increase support to 0.002
+So another set of rules can be support = 0.002, confidence of 0.5 with all rules. But again because whole milk and other vegetables are the most bought itmes. They appear the most frequently in rhs of these 1098 rules. As we have already extracted rules of them, lets consider only those rules where rhs is not whole milk or other vegetables
+
+```{r}
+rules_3 <- apriori (data_raw, parameter = list(supp = 0.002, conf = 0.5))
+rules_sort_3 <- sort (rules_3, by="lift", decreasing=TRUE)
+arules::inspect(rules_sort_3)
+
+```
+
