@@ -6,7 +6,8 @@ output:
   md_document:
     variant: gfm
 ---
-#Question 1 : Case on Green Buildings
+
+**#Question 1 : Case on Green Buildings**
 
 Do you agree with the conclusions of her on-staff stats guru? If so, point to evidence supporting his case. If not, explain specifically where and why the analysis goes wrong, and how it can be improved. (For example, do you see the possibility of confounding variables for the relationship between rent and green status?) Tell your story mainly in pictures, with appropriate introductory and supporting text.
 
@@ -14,14 +15,14 @@ Do you agree with the conclusions of her on-staff stats guru? If so, point to ev
 
 First, several set of parameters were looked into and their correlations and their effect on the rent for the property was looked by different graphs. First few graphs were plotted to see the overall distribution of the data. Few additional columns were created to combine multiple redundant columns and convert zeros and ones to categorical variables. 
 
-```{r setup, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 
 library(tidyverse)
 library(mosaic)
 library(knitr)
 library(dplyr)
 #detach(package:plyr)
-data = read.csv('C:/Users/Pooja Dawada/Desktop/ut/summer/Predictive R Part 2/STA380-master/STA380-master/data/greenbuildings.csv')
+data = read.csv('C:/Users/saqib/OneDrive/Desktop/MSBA/Predictive Modeling/PM(Unsupervised)/PM Assignment Unsupervised/PMUnsupervisedAssignment/greenbuildings.csv')
 
 
 #Addition of few columns for Analysis
@@ -40,12 +41,12 @@ ggplot(data = data) +
 ##categorization of continous vairables
 
 Categorization of few continous variables like Age, electricity price and the total days above/below outside temperature for us to use them for visualization
-```{r setup, echo=FALSE, warning=FALSE}
+```{r , echo=FALSE, warning=FALSE}
 d1 = data %>%
   mutate(agecat = cut(age, c(0,15,30,100)))%>%
   mutate(elecat = cut(Electricity_Costs, c(0,0.01,0.02,0.03,0.05,0.1)))%>%
   mutate(td = cut(total_dd_07, c(0,2000,4000,6000,8000)))
-summary(data)
+#summary(data)
 d1 = na.omit(d1)
 d1 = subset(d1, !is.na(age))
 ```
@@ -54,7 +55,7 @@ d1 = subset(d1, !is.na(age))
 ###Distribution of Green Buidlings across different categories
 
 
-```{r setup, echo=FALSE, warning=FALSE}
+```{r , echo=FALSE, warning=FALSE}
 d2 = d1 %>%
   group_by(agecat) %>%
   summarize(medianrent = median(Rent),percentage = sum(green_rating=='Green')/n(),countof =n())
@@ -103,7 +104,7 @@ labs(title="Class wise Median Rent per Sqdt",
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-```{r setup, echo=FALSE, warning=FALSE}
+```{r , echo=FALSE, warning=FALSE}
 
 d4 = d1 %>%
   group_by(green_rating, class, agecat) %>%
@@ -136,7 +137,7 @@ From the graphs it is evident that there is no considerable increase in Medianre
 
 
 
-```{r setup, echo=FALSE, warning=FALSE}
+```{r , echo=FALSE, warning=FALSE}
 d3net = d1 %>%
   group_by(green_rating, net) %>%
   summarize(medianrent = median(Rent),countof =n())
@@ -156,7 +157,7 @@ Analysis was done to figure out if there is any relation between the contract ty
 ###Net Contract Level Analysis with relation to Electricity Prices
 
 
-```{r setup, echo=FALSE, warning=FALSE}
+```{r , echo=FALSE, warning=FALSE}
 d3netele = d1 %>%
   group_by(green_rating, net,elecat) %>%
   summarize(meanrent = median(Rent),countof =n())
@@ -172,7 +173,7 @@ ggplot(data = d3netele) +
 The underlying assumption was to compare Net Contract to Non Net contract and understand if there is any correlation between the electricity charges with the difference between the contract and non contract type.This is done to look into option of non net contract offering which can help over the years in competitive pricing as the electricity and gas prices hike and green building usually consume lesser electricity and gas. As it can be observed from graphs above that the difference of rent between the net and non net is higher for Non_green buildings, in higher electricity rate bracket of (.03 to .05).
 
 ###Degree Days with Contract rent with Medianrent Comparison
-```{r setup, echo=FALSE, warning=FALSE}
+```{r , echo=FALSE, warning=FALSE}
 d3netele = d1 %>%
   group_by(green_rating, net,td) %>%
   summarize(meanrent = median(Rent),countof =n())
@@ -190,7 +191,7 @@ From the graphs it is evident that the usual difference across contracts is high
 
 
 ### GreenRating Vs Medianrent per Sqft
-```{r setup, echo=FALSE, warning=FALSE}
+```{r , echo=FALSE, warning=FALSE}
 greentype = d1 %>%
   group_by( greentype) %>%
   summarize(meanrent = median(Rent),countof =n())
@@ -205,7 +206,7 @@ ggplot(data = greentype) +
 These graphs indicate the medianrent for different greenrating of Energy star and LEED, It is evident that the Energystar type of GreenRated buildings would earn a higher rent than the LEED in general. Hence if decided to go ahead with greenbuilding aim should be get an Energy star rating for the green building.
 
 #Liner Regression Model on Variables
-```{r setup, echo=FALSE, warning=FALSE}
+```{r , echo=FALSE, warning=FALSE}
 lmmodel = lm(Rent~.,data=d1) 
 summary(lmmodel)
 
@@ -216,7 +217,99 @@ A simple Linear model was fit on to all the variables to include and see if the 
 
 In conclusion that just a green building might not be enough for it to be a profittable, it needs to be a Energystar green rating and it should be rented out as a Non net contract and should be charged for utilities at the market rates for the company to make it profitable.This ensures as the electricity and gas prices increase over the period of time, the company could make money on the utilities charge and compensate for the initial investment over time.
 
-#Q3: Portfolio modeling
+
+
+
+**#Q2: Flights at ABIA**
+
+1)First, let us try to look at the proportions of delayed flights with respect to flights with no delay on a month basis.
+
+Note: Variables used(Origin, Month, DayOfWeek, Delay)
+
+2)Just considering the flights Taking off from Austin
+
+3)So, creating a dummy variable for delays with two options, Either "Delayed" or "No Delay".
+
+4)Removing the NA and plotting a bar chart with month as the x-axis, with number of flights as count in the y-axis.
+
+5)The goal here is to look for months where the number of flights that get delayed is less.
+
+```{r echo = FALSE, warning=FALSE}
+library(ggplot2) #Datavisualization Package
+library(gridExtra) #Datavisualization Package
+library(grid) #Datavisualization Package
+library(reshape2) #Transforming data
+library(knitr) 
+```
+
+```{r echo=FALSE}
+a = read.csv("C:/Users/saqib/OneDrive/Desktop/MSBA/Predictive Modeling/PM(Unsupervised)/PM Assignment Unsupervised/PMUnsupervisedAssignment/ABIA.csv")
+```
+
+
+```{r,echo=FALSE,warning=FALSE}
+
+a$Delay = ifelse(a$DepDelay > 0, "Delayed","No Delay") 
+
+ggplot(na.omit(a[a$Origin == 'AUS',c('Month','Delay')]), 
+       aes(Month, fill=Delay)) + 
+       geom_bar() + 
+       ggtitle('The number of flights leaving ABIA / month') + 
+       labs(y='count') + 
+       scale_fill_discrete(name="Delay?")
+```
+6)Now Bar Chart on a standalone basis is not enough to give a actual picture, so converting it to percentage of delayed flights is a better idea.
+
+7)Here, "1" represents January and "12" represents December.
+```{r echo=FALSE,warning=FALSE}
+
+Delay_Month = na.omit(a[a$Origin == 'AUS',c('Month','Delay')])
+
+delay_matrix=as.matrix(100*table(Delay_Month)[,1]/
+             (table(Delay_Month)[,1]+table(Delay_Month)[,2]))
+colnames(delay_matrix) = "Percentage of flights delayed in each month"
+rownames(delay_matrix) = c(1:12)
+kable(delay_matrix,row.names=c(1:12),digits=1)
+```
+8)Going in further, and exploring the days where the flights gets relatively delayed more in the days of the week and calculating it's perecntage.
+ 
+9)Here "1" represents Monday and "7" represents SUnday
+```{r, echo=FALSE}
+
+ggplot(na.omit(a[a$Origin=='AUS',c('DayOfWeek','Delay')]), 
+       aes(DayOfWeek, fill=Delay)) + 
+       geom_bar() +
+       ggtitle('The number of flights leaving ABIA / days of week') + 
+       labs(x='Day of Week',        
+            y='Number of Flights Leaving Austin by Day of Week') +
+       scale_fill_discrete(name="Delay?")
+```
+```{r, echo=FALSE,warning=FALSE}
+
+Delay_Day = na.omit(a[a$Origin=='AUS',c('DayOfWeek','Delay')])
+
+day_matrix=as.matrix(100*table(Delay_Day)[,1]/
+                    (table(Delay_Day)[,1]+table(Delay_Day)[,2]))
+colnames(day_matrix) = "Percentage of flights delayed by day"
+rownames(day_matrix) = c(1:7)
+kable(day_matrix,row.names=c(1:7),digits=1)
+```
+
+10)Conclusion:
+The plots are intuitive by themselves. It is clear that:
+
+->Month to avoid travelling: December
+
+->Day to avoid traveling: Friday
+
+->Best month to travel: September
+
+->Best day to travel: Saturday
+
+This is just the general trend, for a particular year. So the insights from this dataset should be taken with a grain of salt and not be dependent on it completely. Other factors, which are unpredictable might also play a part.
+
+
+**#Q3: Portfolio modeling**
 
 In the following, bootstrap resampling will be used to estimate the 4-week (20-trading day) value at risk of 3 portfolios at the 5% level.
 
@@ -230,7 +323,7 @@ library(foreach)
 ```
 
 ```{r,echo=FALSE,warning=FALSE}
-# Import a few stocks
+# Import a few ETFs
 mystocks = c("SPY", "TLT", "LQD", "EEM", "VNQ")
 myprices = getSymbols(mystocks,  from = "2014-01-01")
 
@@ -239,7 +332,7 @@ SPYa = adjustOHLC(SPY)
 TLTa = adjustOHLC(TLT)
 LQDa = adjustOHLC(LQD)
 EEMa = adjustOHLC(EEM)
-VNQa = adjustOHLC(EEM)
+VNQa = adjustOHLC(VNQ)
 
 # Look at close-to-close changes
 plot(ClCl(SPYa))
@@ -337,6 +430,7 @@ sigma_VNQ
 
 # Update the value of your holdings
 # Assumes an equal allocation to each asset
+return.today = resample(all_returns, 1, orig.ids=FALSE)
 total_wealth = 100000
 my_weights = c(0.2,0.2,0.2, 0.2, 0.2)
 holdings = total_wealth*my_weights
@@ -345,7 +439,7 @@ holdings = holdings*(1 + return.today)
 # Compute your new total wealth
 total_wealth = sum(holdings)
 ```
-The portfolio EEM is the highest risk portfolio among everyone as it has the highest standard deviation. Then the VNQ< SPY, TLT lies in the middle and they can be classified as medium risk portfolio. Then LQD can be classified as a safe portfolio based on it's standard deviation value.
+The portfolio EEM is the highest risk portfolio among everyone as it has the highest standard deviation. Then the VNQ, SPY, TLT lies in the middle and they can be classified as medium risk portfolio. Then LQD can be classified as a safe portfolio based on it's standard deviation value.
 
 4 weeks of return is simulated using bootstrap for an evenly split portfolio - 20% weight in each ETF
 ```{r,echo=FALSE,warning=FALSE}
@@ -473,13 +567,7 @@ quantile(sim1[,n_days], 0.05) - 100000
 quantile(sim2[,n_days], 0.05) - 100000
 quantile(sim3[,n_days], 0.05) - 100000
 ```
-the 4-week value at risk at the 5% level is 
-
-$-3140.321 for the even split portfolio, 
-
-$-3179.721 for the medium risk portfolio, and 
-
-$-6037.401 for the risky portfolio. 
+the 4-week value at risk at the 5% level is  $-3191.472  for the even split portfolio, $-3179.721 for the medium risk portfolio, and $-6037.401 for the risky portfolio. 
 
 Thus, in this case going with aggressive portfolio will prove to a bad choice. Instead one can opt for a safer or a medium risk portfolio.
 ```{r,echo=FALSE,warning=FALSE}
@@ -494,15 +582,19 @@ hist(sim2[,n_days] - 100000, xlab='Portfolio Value', main='Distribution of Safe 
 ```{r,echo=FALSE,warning=FALSE}
 hist(sim3[,n_days]- 100000, xlab='Portfolio Value', main='Distribution of Aggressive Portfolio Returns')
 ```
-Thus, in this case going with aggressive portfolio will prove to a bad choice. Instead one can opt for a safer or a medium risk portfolio.
 
 
 
-#Q4: Market Segmentation - 
+
+Conclusion:
+Thus, in this case going with aggressive portfolio will prove to be a bad choice. Instead one can opt for a safer or a medium risk portfolio.
+The safer portfolio was the one which ranked first. Then the medium risk portfolio is the second best one among all the three.
+
+**#Q4: Market Segmentation - **
 
 ##Step1: Import and scale the data
-```{r echo = FALSE, message=FALSE}
-social_marketing <- read.csv("C:/Users/Pooja Dawada/Desktop/ut/summer/Predictive R Part 2/STA380-master/STA380-master/data/social_marketing.csv")
+```{r echo = FALSE, message=FALSE, warning = FALSE}
+social_marketing <- read.csv("C:/Users/saqib/OneDrive/Desktop/MSBA/Predictive Modeling/PM(Unsupervised)/PM Assignment Unsupervised/PMUnsupervisedAssignment/social_marketing.csv")
 
 library(ggplot2)
 library(LICORS)  # for kmeans++
@@ -518,13 +610,14 @@ sigma = attr(X,"scaled:scale")
 ```
 
 ##Step2: Elbow Method for finding the optimal number of clusters
+
 Plotting wss
-```{r echo = FALSE, message=FALSE}
+```{r echo = FALSE, message=FALSE, warning = FALSE}
 set.seed(100)
-Clust_count <- 20
-wss <- sapply(1:Clust_count, function(k){kmeanspp(X, k, nstart=30,iter.max = 15 )$tot.withinss})
+Clust_count <- 15
+wss <- sapply(5:Clust_count, function(k){kmeanspp(X, k, nstart=30,iter.max = 15 )$tot.withinss})
 wss
-plot(1:Clust_count, wss,
+plot(5:Clust_count, wss,
      type="b", pch = 19, frame = FALSE, 
      xlab="Clusters",
      ylab="Within clusters sum of squares")
@@ -532,12 +625,13 @@ plot(1:Clust_count, wss,
 ```
 
 Plotting bss
-```{r echo = FALSE, message=FALSE}
+
+```{r echo = FALSE, message=FALSE, warning = FALSE}
 set.seed(100)
-Clust_count <- 20
-bss <- sapply(1:Clust_count, function(k){kmeanspp(X, k, nstart=30,iter.max = 15 )$betweenss})
+Clust_count <- 15
+bss <- sapply(5:Clust_count, function(k){kmeanspp(X, k, nstart=30,iter.max = 15 )$betweenss})
 bss
-plot(1:Clust_count, bss,
+plot(5:Clust_count, bss,
      type="b", pch = 19, frame = FALSE, 
      xlab="Number of clusters K",
      ylab="Between clusters sum of squares")
@@ -547,65 +641,303 @@ plot(1:Clust_count, bss,
 
 The plot does not give us any decisive results but k= 8-10 look like viable results, so taking an estimate of k=8
 
-##Step 3: Analyse the clusters
+*##Step 3: Analyse the clusters
 
 Looking at cluster1
-```{r echo = FALSE, message=FALSE}
+
+```{r echo = FALSE, message=FALSE, warning = FALSE}
 set.seed(100)
 clust1 = kmeanspp(X, 8, nstart=30, iter.max =15)
 
-social_marketing[which(clust1$cluster == 1),]
+kable(head(social_marketing[which(clust1$cluster == 1),],10))
 ```
+
+
+
+
 Absolute numbers might be misleading because these are small counts, where it might be the case that one category in general gets tweeted about the most/least
 So looking at scaled data's cluster centers to make inferences about these clusters
 
+
+
 ```{r echo = FALSE, message=FALSE}
-clust1$center[1,]
+kable(clust1$center[1,])
 ```
+
+
+
 Cluster1 is negative centres for almost all the categories which might be people who in general tweet less
 
-```{r echo = FALSE, message=FALSE}
-clust1$center[2,]
-```
-Cluster2 Politics, news, travel, Computers, automotive have the centres : The aware, urban poulation
+
 
 ```{r echo = FALSE, message=FALSE}
-clust1$center[3,]
+kable(clust1$center[2,])
 ```
+
+
+
+Cluster2 Politics, news, travel, Computers, automotive have the centres : The aware, urban poulation
+
+
+```{r echo = FALSE, message=FALSE}
+kable(clust1$center[3,])
+```
+
+
 Cluster3 Fashion, beauty, cooking, photo sharing has the highest centres (Beauty and lifestyle bloggers)
 
 ```{r echo = FALSE, message=FALSE}
-clust1$center[4,]
+kable(clust1$center[4,])
 ```
+
+
 Cluster4 health_nutrition, personal fitness, outdoors has highest centres (Health bloggers)
 
 ```{r echo = FALSE, message=FALSE}
-clust1$center[5,]
+kable(clust1$center[5,])
 ```
+
+
 Cluster5 religion, parenting, sports, food, school has the highest centres(Young parents)
 
 ```{r echo = FALSE, message=FALSE}
-clust1$center[6,]
+kable(clust1$center[6,])
 ```
+
+
 Cluster6 Online gaming, college uni has the highest centres : College Students
 
 ```{r echo = FALSE, message=FALSE}
-clust1$center[7,]
+kable(clust1$center[7,])
 ```
+
+
+
 Cluster7 Spam, adult has the highest centres: Bot
 
 ```{r echo = FALSE, message=FALSE}
-clust1$center[8,]
+kable(clust1$center[8,])
 ```
-Cluster8 Chatter, shopping, photosharing has the highest centres
 
-#Q6: Association Rule mining
+
+
+Notes: Cluster8 Chatter, shopping, photosharing has the highest centres
+
+**#Question 5:Author attribution**
+
+###Overview
+
+The aim was to predict the author of the document, It requires us to read the documents, apply few corrections and cleaning of text files and then create TFIDF matrix for each of the documents and then use any of supervised learning methods to predict the author for the new document from the test set.
+
+###Reading of Training set documents
+```{r, echo=FALSE, warning=FALSE}
+library(tm) 
+library(magrittr)
+library(slam)
+library(proxy)
+library(glmnet)
+library(MLmetrics)
+library(caret)
+library(e1071)
+
+#install.packages('e1071', dependencies=TRUE)
+
+readerPlain = function(fname){
+  readPlain(elem=list(content=readLines(fname)), 
+            id=fname, language='en') }
+
+
+
+doc_list = Sys.glob('C:/Users/saqib/OneDrive/Desktop/MSBA/Predictive Modeling/PM(Unsupervised)/PM Assignment Unsupervised/PMUnsupervisedAssignment/ReutersC50/ReutersC50/C50train/*')
+file_list = Sys.glob(paste0(doc_list, '/*.txt'))
+temp = lapply(file_list, readerPlain) 
+doc_list
+mynames = file_list %>%
+  { strsplit(., '/', fixed=TRUE) } %>%
+  { lapply(., tail, n=2) } %>%
+  { lapply(., head, n=1) } %>%
+  { lapply(., paste0, collapse = '') } %>%
+  unlist
+
+
+names(temp) = mynames
+
+documents_raw = VCorpus(VectorSource(temp))
+my_documents = documents_raw
+my_documents = tm_map(my_documents, content_transformer(tolower)) 
+my_documents = tm_map(my_documents, content_transformer(removeNumbers)) 
+my_documents = tm_map(my_documents, content_transformer(removePunctuation)) 
+my_documents = tm_map(my_documents, content_transformer(stripWhitespace))
+
+```
+The steps involve reading the different documents in the test folder and store each of them as row element with the entire text of the document, loading the name of the author from the names of the folders and assign them at a row level to map to the documents followed by correction of text files by removing any punctuation marks, converting it to lower case and stripping any white spaces etc.
+
+### Creation of TFIDF from DocumentTermMatrix
+
+
+```{r echo=FALSE, warning=FALSE}
+DTM = DocumentTermMatrix(my_documents)
+DTM = removeSparseTerms(DTM, 0.95)
+tfidf_train = weightTfIdf(DTM)
+```
+This step creates the TDIDF Matrix with all the words with percentile greater than 95
+
+### Creation of Principal Compponents from TFIDF
+
+```{r echo=FALSE}
+
+X_train = as.matrix(tfidf_train)
+summary(colSums(X_train))
+scrub_cols = which(colSums(X_train) == 0)
+X_train = X_train[,-scrub_cols]
+pca= prcomp(X_train, scale=TRUE)
+#pca$x
+X_train = pca$x[,1:100]
+Y_train = mynames
+#Y_train
+
+```
+
+The TFIDF matrix created has around 890 terms with all the words, to reduce the computational load, Principal components analysis was done and the top 100 principal components were taken for analysis. X_train and Y_train were created using the PCA
+
+#### Reading the test data 
+```{r echo=FALSE}
+readerPlain = function(fname){
+  readPlain(elem=list(content=readLines(fname)), 
+            id=fname, language='en') }
+
+doc_list = Sys.glob('C:/Users/saqib/OneDrive/Desktop/MSBA/Predictive Modeling/PM(Unsupervised)/PM Assignment Unsupervised/PMUnsupervisedAssignment/ReutersC50/ReutersC50/C50test/*')
+file_list = Sys.glob(paste0(doc_list, '/*.txt'))
+testdoc = lapply(file_list, readerPlain) 
+
+mynames_test = file_list %>%
+  { strsplit(., '/', fixed=TRUE) } %>%
+  { lapply(., tail, n=2) } %>%
+  { lapply(., head, n=1) } %>%
+  { lapply(., paste0, collapse = '') } %>%
+  unlist
+Y_test=mynames_test
+#names(testdoc) = mynames
+
+documents_raw_1 = VCorpus(VectorSource(testdoc))
+my_documents1 = documents_raw_1
+my_documents1 = tm_map(my_documents1, content_transformer(tolower)) # make everything lowercase
+my_documents1 = tm_map(my_documents1, content_transformer(removeNumbers)) # remove numbers
+my_documents1 = tm_map(my_documents1, content_transformer(removePunctuation)) # remove punctuation
+my_documents1 = tm_map(my_documents1, content_transformer(stripWhitespace)) ## remove excess white-space
+DTM_test = DocumentTermMatrix(my_documents1,control = list(dictionary=Terms(DTM)))
+DTM_test = removeSparseTerms(DTM_test, 0.95)
+tfidf_test = weightTfIdf(DTM_test)
+X_test = as.matrix(tfidf_test)
+scrub_cols = which(colSums(X_test) == 0)
+X_test = X_test[,-scrub_cols]
+```
+This step looks into the test set and creates the test set for measuring the accuracy of the model. This works till the step to create, tfidf matrix for the test set
+
+#Modification of Test tfidf to include only those words of trainset
+```{r echo = FALSE}
+train_pre_pc = as.matrix(tfidf_train)
+scrub_cols = which(colSums(train_pre_pc) == 0)
+train_pre_pc = train_pre_pc[,-scrub_cols]
+train_name = colnames(train_pre_pc)
+test_name = colnames(X_test)
+sup = setdiff(train_name, test_name)
+temp_x = data.frame(X_test)
+for (colname_ in sup){
+  temp_x[,colname_] = 0
+}
+#setdiff(colnames(t), train_name)
+
+colnames(temp_x)[colnames(temp_x)=="for."] <- "for"
+colnames(temp_x)[colnames(temp_x)=="next."] <- "next"
+colnames(temp_x)[colnames(temp_x)=="while."] <- "while"
+t = data.matrix(temp_x)
+t <- t[, order(colnames(t))]
+
+#transform the test set to the principal component spaces of the training set
+
+test.data <- predict(pca, newdata =t)
+test.data <- as.data.frame(test.data)
+test.data <- test.data[,1:100]
+
+
+
+```
+This step converts the tfidf function from the test set and modifies it accordingly to the words of the train tfidf, this is necessary to ensure that the columns match if both the test set and the train set for the model to predict. So in this set only those columns of the test set which are present in the train set and created an test.data for validation
+
+###Random Forest Model
+
+```{r echo=FALSE, warning=FALSE}
+library(randomForest)
+fY = factor(Y_train)
+dfX =data.frame(X_train)
+XY = cbind(dfX, fY)
+rffit = randomForest(fY~.,data=XY,ntree=1000)
+prf<- predict(rffit, newdata = test.data)
+cat("The Accuracy of the model is ", Accuracy(prf, factor(Y_test)))
+confusionMatrix(table(prf,Y_test))$byClass[,"Balanced Accuracy"]
+```
+With Randomforest the accuracy of the model obtained is 52%, this can be attributed to few writers whose writing style is similar to multiple others in the group. The confusion matrix shows at an author level what is the accuracy.
+
+###Model: Logistics LASSO
+```{r echo=FALSE, warning=FALSE}
+
+out1 = glmnet(X_train, factor(Y_train), family="multinomial")
+p1 = predict(out1, data.matrix(test.data), s=0.01, type = "response")
+myPredict_for_out1 <- function(which_article){
+  return(which.max(p1[which_article,,]))
+}
+
+real=Y_test
+pred_aut = vector()
+for (i in 1:2500){
+  pred_aut[i] =names(myPredict_for_out1(i))
+}
+cat("The accuracy of the model is ", Accuracy(pred_aut, Y_test))
+(table(pred_aut,Y_test)%>%confusionMatrix)$byClass[,"Balanced Accuracy"]
+
+
+
+```
+
+With Logistic Lasso, the accuracy obtained is 41.6%, which is less than of Randomforest which was run earlier
+
+###Model : Boosting
+
+```{r echo=FALSE}
+library(gbm)
+i=200
+j=6
+k=0.01
+finb = gbm(fY~.,data=XY,distribution="multinomial",
+           interaction.depth=j,n.trees=i,shrinkage=k)
+pred=predict(finb,newdata=test.data,n.trees=i)
+labels = colnames(pred)[apply(pred, 1, which.max)]
+Acc = Accuracy(labels,factor(Y_test))
+result = data.frame(factor(Y_test), labels)
+cm = confusionMatrix(factor(Y_test), as.factor(labels))
+cm$byClass[,"Balanced Accuracy"]
+cat("The accuracy of the model is ",Acc)
+
+
+```
+
+Boosting Model was applied to model using the train set and test set was used to predict the author. This Model gave the result with the accuracy of 35.24%. However this can be fine tuned by running multiple iterations of varied depths, number of tress and shrinkage parameters.
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+**#Q6: Association Rule mining**
 
 ##Import
 ```{r echo = FALSE, message=FALSE}
 library(arules)
-data_raw <- read.transactions("C:/Users/Pooja Dawada/Desktop/ut/summer/Predictive R Part 2/STA380-master/STA380-master/data/groceries.txt", format = "basket", sep=",")
-LIST(head(data_raw),3)
+data_raw <- read.transactions("C:/Users/saqib/OneDrive/Desktop/MSBA/Predictive Modeling/PM(Unsupervised)/PM Assignment Unsupervised/PMUnsupervisedAssignment/groceries.txt", format = "basket", sep=",")
+kable(LIST(head(data_raw),3))
 ```
 
 #Frequency Plot
@@ -616,45 +948,71 @@ itemFrequencyPlot(data_raw, topN=10, type="absolute", main="Item Frequency")
 
 ```
 
+
+
 Starting with high support and high confidence to get strongest rules
 Support = 0.0045, confidence = 0.5
+
+
+
+
+
 ```{r echo=FALSE}
 rules_1 <- apriori (data_raw, parameter = list(supp = 0.0045, conf = 0.5))
 rules_sort_1 <- sort (rules_1, by="lift", decreasing=TRUE)
-arules::inspect(rules_sort_1)
-
+kable(as(rules_sort_1,"data.frame"))
 
 ```
-#First set of rules
+
+
+
+
+###First set of rules
 A lot of high support rules involve whole milk and other vegetables on rhs because we can see from eclat that whole milk and other vegetables are sold the most
 157 rules with support > 0.0045 and confidence 0.5 involve only whole milk and other vegetables in rhs, so if we look at only high support rules, we won't get rules involving other products
 First step to extract rules from here would be, for support>0.0045, get very high confidence and lift rules. Conf of 0.6 and lift of 2.5
 These gives us all the important rules where rhs is whole milk or other vegetables. (Produces 13 rules) All these rules look like a general vegetarian diary/vegetable/fruit grocery trip.
+
+
+
 ```{r echo=FALSE}
 rules_1 <- apriori (data_raw, parameter = list(supp = 0.0045, conf = 0.6))
 rules_sort_1 <- sort (rules_1, by="lift", decreasing=TRUE)
-arules::inspect(head(rules_sort_1,13))
+kable(head(as(rules_sort_1,"data.frame"),13))
 
 ```
+
+
+
+
+
 ##Second set of rules
 Many rules have support between 0.002 and 0.001 but their lift is very high. To capture those, reduced the support to 0.001 
 (The count reduces by a great deal because of this) So one way of pulling these would be, support of 0.001, confidence of 0.6 and lift of 9. 
 This will help us capture only those rules where the impact is huge even though the support is small. This gives us 11 rules
 These look like sandwich, party, parfait trips.
+
+
 ```{r echo=FALSE}
 rules_2 <- apriori (data_raw, parameter = list(supp = 0.001, conf = 0.6))
 rules_sort_2 <- sort (rules_2, by="lift", decreasing=TRUE)
-arules::inspect(head(rules_sort_2,11))
 
+kable(head(as(rules_sort_2,"data.frame"),11))
 ```
+
+
+
+
 ##Third set of rules
 Increase support to 0.002
 So another set of rules can be support = 0.002, confidence of 0.5 with all rules. But again because whole milk and other vegetables are the most bought itmes. They appear the most frequently in rhs of these 1098 rules. As we have already extracted rules of them, lets consider only those rules where rhs is not whole milk or other vegetables
 
+
+
 ```{r}
 rules_3 <- apriori (data_raw, parameter = list(supp = 0.002, conf = 0.5))
 rules_sort_3 <- sort (rules_3, by="lift", decreasing=TRUE)
-arules::inspect(rules_sort_3)
 
+kable(head(as(rules_sort_3,"data.frame"),40))
 ```
 
